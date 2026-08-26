@@ -197,11 +197,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Выбор комплекса — только если ещё не выбран
     if state["complex"] is None:
-        if text in COMPLEX_TEXTS:
-            state["complex"] = text
-            await update.message.reply_text(
-                COMPLEX_TEXTS[text], reply_markup=CLUB_KEYBOARD
-            )
+    if text in COMPLEX_TEXTS:
+        state["complex"] = text
+        await update.message.reply_video(
+            video=VIDEO_URL,
+            caption=COMPLEX_TEXTS[text],
+            reply_markup=CLUB_KEYBOARD
+        )
             return
     else:
         # Комплекс уже выбран — кнопки выбора больше не работают
