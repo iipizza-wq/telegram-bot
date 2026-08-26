@@ -191,29 +191,25 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         return
 
-        # Выбор комплекса — только если ещё не выбран
-    if state["complex"] is None:
-    if text in COMPLEX_TEXTS:
+       # Выбор комплекса — только если ещё не выбран
+if state["complex"] is None:
+    if text in COMPLEX_TEXTS:   # ✅ 4 пробела перед if
         state["complex"] = text
-        
-        # Отправляем видео через InputMediaVideo
         video_media = InputMediaVideo(
             media=VIDEO_URL,
             caption=COMPLEX_TEXTS[text],
             supports_streaming=True
         )
         await update.message.reply_media_group(media=[video_media])
-        
-        # Отправляем кнопку отдельно (её нельзя добавить в медиа-группу)
         await update.message.reply_text(
             "Нажми на кнопку ниже, чтобы присоединиться к клубу:",
             reply_markup=CLUB_KEYBOARD
         )
         return
-    else:
-        # Комплекс уже выбран — кнопки выбора больше не работают
-        if text in COMPLEX_TEXTS:
-            return
+else:
+    # Комплекс уже выбран — кнопки выбора больше не работают
+    if text in COMPLEX_TEXTS:
+        return
     # Кнопка "Хочу в клуб"
     if text == BTN_CLUB or text.lower() == BTN_CLUB.lower():
         if state["phone"]:
