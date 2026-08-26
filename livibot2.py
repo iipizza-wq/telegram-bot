@@ -20,8 +20,7 @@ logger = logging.getLogger(__name__)
 TOKEN = "7722427747:AAFS11MutsqtvjVf8XiSy8GDBfnQjhY94Es"
 
 VIDEO_URL = "http://195.133.60.26:8080/vecherniy.mp4"
-CHANNEL_LINK = "https://t.me/гибкое_тело"
-
+CHANNEL_LINK = "https://t.me/leralivingston"
 BTN_GET_COMPLEX = "🎥 Хочу получить комплекс"
 BTN_CLUB = "Хочу в клуб"
 BTN_SHARE_PHONE = "📱 Поделиться номером"
