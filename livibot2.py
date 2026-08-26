@@ -3,7 +3,7 @@ import os
 import re
 from datetime import datetime, timedelta, timezone
 
-from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, InputMediaVideo
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 # Твой токен от BotFather
 TOKEN = "7722427747:AAFS11MutsqtvjVf8XiSy8GDBfnQjhY94Es"
 
+# Ссылка на видео (лежит на твоём сервере)
 VIDEO_URL = "http://195.133.60.26:8080/vecherniy.mp4"
 CHANNEL_LINK = "https://t.me/гибкое_тело"
 PHONE_RE = re.compile(r"^[78]\d{10}$")
@@ -88,10 +89,7 @@ WARMUP_DELAYS = [
     72 * 60 * 60,   # 72 часа
 ]
 
-# Состояние пользователей: chat_id -> dict
 user_data = {}
-
-# Все входящие личные сообщения (для админа)
 incoming_messages = []
 
 START_KEYBOARD = ReplyKeyboardMarkup(
@@ -146,7 +144,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state = get_state(chat_id)
     touch(chat_id, context)
 
-    # Полная очистка старой клавиатуры
     await update.message.reply_text(
         "Начинаем заново!",
         reply_markup=ReplyKeyboardRemove()
@@ -164,6 +161,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_text(START_TEXT, reply_markup=START_KEYBOARD)
+
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
@@ -191,18 +189,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         return
 
-   # Выбор комплекса — только если ещё не выбран
-if state["complex"] is None:
-    if text in COMPLEX_TEXTS:
-        state["complex"] = text
-        await update.message.reply_text(
-            COMPLEX_TEXTS[text], reply_markup=CLUB_KEYBOARD
-        )
-        return
-else:
-    # Комплекс уже выбран — кнопки выбора больше не работают
-    if text in COMPLEX_TEXTS:
-        return
+    # Выбор комплекса — только если ещё не выбран
+    if state["complex"] is None:
+        if text in COMPLEX_TEXTS:
+            state["complex"] = text
+            await update.message.reply_text(
+                COMPLEX_TEXTS[text], reply_markup=CLUB_KEYBOARD
+            )
+            return
+    else:
+        # Комплекс уже выбран — кнопки выбора больше не работают
+        if text in COMPLEX_TEXTS:
+            return
 
     # Кнопка "Хочу в клуб"
     if text == BTN_CLUB or text.lower() == BTN_CLUB.lower():
@@ -234,6 +232,7 @@ else:
     await update.message.reply_text(
         "Твоё сообщение получено. Я отвечу тебе в ближайшее время 💛"
     )
+
 
 def main():
     app = Application.builder().token(TOKEN).build()
