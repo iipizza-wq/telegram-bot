@@ -1,5 +1,4 @@
 import logging
-import os
 import re
 from datetime import datetime, timedelta, timezone
 
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 # Твой токен от BotFather
 TOKEN = "7722427747:AAFS11MutsqtvjVf8XiSy8GDBfnQjhY94Es"
 
-# Ссылка на видео (лежит на твоём сервере)
+# Ссылка на видео
 VIDEO_URL = "http://195.133.60.26:8080/vecherniy.mp4"
 CHANNEL_LINK = "https://t.me/гибкое_тело"
 PHONE_RE = re.compile(r"^[78]\d{10}$")
@@ -103,7 +102,6 @@ START_KEYBOARD = ReplyKeyboardMarkup(
 
 CLUB_KEYBOARD = ReplyKeyboardMarkup([[BTN_CLUB]], resize_keyboard=True)
 
-
 def get_state(chat_id: int) -> dict:
     if chat_id not in user_data:
         user_data[chat_id] = {
@@ -114,12 +112,10 @@ def get_state(chat_id: int) -> dict:
         }
     return user_data[chat_id]
 
-
 async def warmup_job(context: ContextTypes.DEFAULT_TYPE):
     chat_id = context.job.chat_id
     index = context.job.data["index"]
     await context.bot.send_message(chat_id=chat_id, text=WARMUP_MESSAGES[index])
-
 
 def schedule_warmup(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
     job_queue = context.job_queue
@@ -136,12 +132,10 @@ def schedule_warmup(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
             data={"index": index},
         )
 
-
 def touch(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
     state = get_state(chat_id)
     state["last_activity"] = datetime.now(timezone.utc)
     schedule_warmup(chat_id, context)
-
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
@@ -166,14 +160,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(START_TEXT, reply_markup=START_KEYBOARD)
 
-
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     text = (update.message.text or "").strip()
     state = get_state(chat_id)
     touch(chat_id, context)
 
-    # Ожидание номера телефона
     if state["awaiting_phone"]:
         phone = re.sub(r"[^\d]", "", text)
         if PHONE_RE.match(phone):
@@ -193,7 +185,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         return
 
-    # Выбор комплекса — только если ещё не выбран
     if state["complex"] is None:
         if text in COMPLEX_TEXTS:
             state["complex"] = text
@@ -202,11 +193,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
     else:
-        # Комплекс уже выбран — кнопки выбора больше не работают
         if text in COMPLEX_TEXTS:
             return
 
-    # Кнопка "Хочу в клуб"
     if text == BTN_CLUB or text.lower() == BTN_CLUB.lower():
         if state["phone"]:
             await update.message.reply_text(
@@ -221,7 +210,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # Любое другое сообщение — сохраняем для админа
     record = {
         "chat_id": chat_id,
         "username": update.effective_user.username,
@@ -237,16 +225,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Твоё сообщение получено. Я отвечу тебе в ближайшее время 💛"
     )
 
-
 def main():
     app = Application.builder().token(TOKEN).build()
-
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
     print("Бот запущен...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
-
 
 if __name__ == "__main__":
     main()
