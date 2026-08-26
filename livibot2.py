@@ -1,5 +1,4 @@
 import logging
-import os
 import re
 from datetime import datetime, timedelta, timezone
 
@@ -18,7 +17,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Твой токен от BotFather
 TOKEN = "7722427747:AAFS11MutsqtvjVf8XiSy8GDBfnQjhY94Es"
 
 VIDEO_URL = "http://195.133.60.26:8080/vecherniy.mp4"
@@ -42,24 +40,28 @@ COMPLEX_TEXTS = {
     BTN_BACK: (
         "Комплекс от зажимов в спине после сидячего дня — 15 минут. "
         "Тебе нужен только коврик.\n\n"
+        f"{VIDEO_URL}\n\n"
         "Сделаешь — напиши мне, что изменилось. Мне важно знать 💛\n\n"
         "Если хочешь задать вопрос лично — просто напиши мне в этот чат."
     ),
     BTN_MORNING: (
         "Утренний комплекс — 10 минут. Идеально делать сразу после пробуждения, "
         "но подойдёт в любое время до 12:00.\n\n"
+        f"{VIDEO_URL}\n\n"
         "Сделаешь — напиши, как ощущения. Мне важно знать 💛\n\n"
         "Если хочешь задать вопрос лично — просто напиши мне в этот чат."
     ),
     BTN_PLASTIC: (
         "Комплекс на пластику для сильного и гибкого тела — 20 минут. "
         "Тебе нужен только коврик.\n\n"
+        f"{VIDEO_URL}\n\n"
         "Сделаешь — напиши мне, что почувствовала. Мне важно знать 💛\n\n"
         "Если хочешь задать вопрос лично — просто напиши мне в этот чат."
     ),
     BTN_EVENING: (
         "Вечерний комплекс — 15 минут. Делай перед сном, в удобной одежде, "
         "на коврике или прямо в кровати.\n\n"
+        f"{VIDEO_URL}\n\n"
         "Сделаешь — напиши, что почувствовала. Мне важно знать 💛\n\n"
         "Если хочешь задать вопрос лично — просто напиши мне в этот чат."
     ),
@@ -81,17 +83,14 @@ WARMUP_MESSAGES = [
 ]
 
 WARMUP_DELAYS = [
-    60 * 60,        # 1 час
-    12 * 60 * 60,   # 12 часов
-    24 * 60 * 60,   # 24 часа
-    48 * 60 * 60,   # 48 часов
-    72 * 60 * 60,   # 72 часа
+    60 * 60,
+    12 * 60 * 60,
+    24 * 60 * 60,
+    48 * 60 * 60,
+    72 * 60 * 60,
 ]
 
-# Состояние пользователей: chat_id -> dict
 user_data = {}
-
-# Все входящие личные сообщения (для админа)
 incoming_messages = []
 
 START_KEYBOARD = ReplyKeyboardMarkup(
@@ -100,7 +99,6 @@ START_KEYBOARD = ReplyKeyboardMarkup(
 )
 
 CLUB_KEYBOARD = ReplyKeyboardMarkup([[BTN_CLUB]], resize_keyboard=True)
-
 
 def get_state(chat_id: int) -> dict:
     if chat_id not in user_data:
@@ -112,12 +110,10 @@ def get_state(chat_id: int) -> dict:
         }
     return user_data[chat_id]
 
-
 async def warmup_job(context: ContextTypes.DEFAULT_TYPE):
     chat_id = context.job.chat_id
     index = context.job.data["index"]
     await context.bot.send_message(chat_id=chat_id, text=WARMUP_MESSAGES[index])
-
 
 def schedule_warmup(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
     job_queue = context.job_queue
@@ -134,19 +130,16 @@ def schedule_warmup(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
             data={"index": index},
         )
 
-
 def touch(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
     state = get_state(chat_id)
     state["last_activity"] = datetime.now(timezone.utc)
     schedule_warmup(chat_id, context)
-
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     state = get_state(chat_id)
     touch(chat_id, context)
 
-    # Полная очистка старой клавиатуры
     await update.message.reply_text(
         "Начинаем заново!",
         reply_markup=ReplyKeyboardRemove()
@@ -171,7 +164,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state = get_state(chat_id)
     touch(chat_id, context)
 
-    # Ожидание номера телефона
     if state["awaiting_phone"]:
         phone = re.sub(r"[^\d]", "", text)
         if PHONE_RE.match(phone):
@@ -191,21 +183,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         return
 
-        # Выбор комплекса — только если ещё не выбран
     if state["complex"] is None:
         if text in COMPLEX_TEXTS:
             state["complex"] = text
-            await update.message.reply_video(
-                video=VIDEO_URL,
-                caption=COMPLEX_TEXTS[text],
-                reply_markup=CLUB_KEYBOARD
+            await update.message.reply_text(
+                COMPLEX_TEXTS[text], reply_markup=CLUB_KEYBOARD
             )
             return
     else:
-        # Комплекс уже выбран — кнопки выбора больше не работают
         if text in COMPLEX_TEXTS:
             return
-    # Кнопка "Хочу в клуб"
+
     if text == BTN_CLUB or text.lower() == BTN_CLUB.lower():
         if state["phone"]:
             await update.message.reply_text(
@@ -220,7 +208,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # Любое другое сообщение — сохраняем для админа
     record = {
         "chat_id": chat_id,
         "username": update.effective_user.username,
@@ -236,7 +223,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Твоё сообщение получено. Я отвечу тебе в ближайшее время 💛"
     )
 
-
 def main():
     app = Application.builder().token(TOKEN).build()
 
@@ -245,7 +231,6 @@ def main():
 
     print("Бот запущен...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
-
 
 if __name__ == "__main__":
     main()
