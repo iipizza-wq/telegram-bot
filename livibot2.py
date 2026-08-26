@@ -17,7 +17,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-TOKEN = "TOKEN = os.environ.get("TOKEN")"
+TOKEN = os.environ.get("TOKEN")
 
 VIDEO_URL = "http://195.133.60.26:8080/vecherniy.mp4"
 CHANNEL_LINK = "https://t.me/leralivingston"
