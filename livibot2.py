@@ -3,7 +3,7 @@ import os
 import re
 from datetime import datetime, timedelta, timezone
 
-from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, InputMediaVideo
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -193,14 +193,23 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Выбор комплекса — только если ещё не выбран
     if state["complex"] is None:
-        if text in COMPLEX_TEXTS:
-            state["complex"] = text
-            await update.message.reply_video(
-                video=VIDEO_URL,
-                caption=COMPLEX_TEXTS[text],
-                reply_markup=CLUB_KEYBOARD
-            )
-            return
+    if text in COMPLEX_TEXTS:
+        state["complex"] = text
+        
+        # Отправляем видео через InputMediaVideo
+        video_media = InputMediaVideo(
+            media=VIDEO_URL,
+            caption=COMPLEX_TEXTS[text],
+            supports_streaming=True
+        )
+        await update.message.reply_media_group(media=[video_media])
+        
+        # Отправляем кнопку отдельно (её нельзя добавить в медиа-группу)
+        await update.message.reply_text(
+            "Нажми на кнопку ниже, чтобы присоединиться к клубу:",
+            reply_markup=CLUB_KEYBOARD
+        )
+        return
     else:
         # Комплекс уже выбран — кнопки выбора больше не работают
         if text in COMPLEX_TEXTS:
