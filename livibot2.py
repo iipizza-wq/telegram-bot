@@ -194,6 +194,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             COMPLEX_TEXT,
             reply_markup=CLUB_KEYBOARD,
+            parse_mode='Markdown'
         )
         schedule_warmup(chat_id, context)
         return
