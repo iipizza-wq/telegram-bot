@@ -162,6 +162,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             COMPLEX_TEXT,
             reply_markup=CLUB_KEYBOARD,
+            parse_mode='Markdown'
         )
         return
 
