@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 TOKEN = os.environ.get("TOKEN")
 
-# === НОВЫЕ ССЫЛКИ ===
+# === ССЫЛКИ ===
 VIDEO_URL = "http://195.133.60.26:8080/vecherniy.mp4"
 CLUB_BOT_LINK = "https://t.me/livi_club_bot"
 SITE_LINK = "https://leralivi.ru/"
@@ -28,7 +28,7 @@ SITE_LINK = "https://leralivi.ru/"
 # === КНОПКИ ===
 BTN_GET_COMPLEX = "🎥 Хочу получить комплекс"
 BTN_CLUB = "Хочу в клуб. Перейти для подписки"
-BTN_SITE = "Узнать подробнее"
+BTN_SITE = "🌐 Узнать подробнее"
 BTN_SHARE_PHONE = "📱 Поделиться номером"
 
 START_TEXT = (
@@ -69,7 +69,7 @@ WARMUP_DAILY = [
 user_data = {}
 incoming_messages = []
 
-# === НОВЫЕ КЛАВИАТУРЫ ===
+# === КЛАВИАТУРЫ ===
 START_KEYBOARD = ReplyKeyboardMarkup(
     [[BTN_GET_COMPLEX]],
     resize_keyboard=True,
@@ -83,8 +83,18 @@ CLUB_KEYBOARD = ReplyKeyboardMarkup(
     resize_keyboard=True,
 )
 
+# Клавиатура с кнопкой "Узнать подробнее" и кнопкой для отправки номера
 PHONE_KEYBOARD = ReplyKeyboardMarkup(
-    [[KeyboardButton(BTN_SHARE_PHONE, request_contact=True)]],
+    [
+        [KeyboardButton(BTN_SHARE_PHONE, request_contact=True)],
+        [BTN_SITE]
+    ],
+    resize_keyboard=True,
+)
+
+# Клавиатура для финального сообщения (только кнопка "Узнать подробнее")
+SITE_ONLY_KEYBOARD = ReplyKeyboardMarkup(
+    [[BTN_SITE]],
     resize_keyboard=True,
 )
 
@@ -165,6 +175,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     if state["complex_given"]:
+        # После получения комплекса показываем кнопку "Узнать подробнее" всегда
         await update.message.reply_text(
             COMPLEX_TEXT,
             reply_markup=CLUB_KEYBOARD,
@@ -187,7 +198,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         state["phone"] = phone
         logger.info("Новый участник клуба: chat_id=%s, телефон=%s", chat_id, phone)
         await update.message.reply_text(
-            CLUB_SUCCESS_TEXT, reply_markup=ReplyKeyboardRemove()
+            CLUB_SUCCESS_TEXT,
+            reply_markup=SITE_ONLY_KEYBOARD
         )
         await update.message.reply_text(
             f"Для подписки перейди в бота: {CLUB_BOT_LINK}"
