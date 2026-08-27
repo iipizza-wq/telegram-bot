@@ -20,10 +20,15 @@ logger = logging.getLogger(__name__)
 
 TOKEN = os.environ.get("TOKEN")
 
+# === НОВЫЕ ССЫЛКИ ===
 VIDEO_URL = "http://195.133.60.26:8080/vecherniy.mp4"
-CHANNEL_LINK = "https://t.me/leralivingston"
+CLUB_BOT_LINK = "https://t.me/livi_club_bot"
+SITE_LINK = "https://leralivi.ru/"
+
+# === КНОПКИ ===
 BTN_GET_COMPLEX = "🎥 Хочу получить комплекс"
-BTN_CLUB = "Хочу в клуб"
+BTN_CLUB = "Хочу в клуб. Перейти для подписки"
+BTN_SITE = "Узнать подробнее"
 BTN_SHARE_PHONE = "📱 Поделиться номером"
 
 START_TEXT = (
@@ -48,7 +53,7 @@ CLUB_SUCCESS_TEXT = (
     "Добро пожаловать в LIVICLUB! 🕊✨"
 )
 
-# Сообщения для прогрева (каждый час — 3 сообщения, каждый день — 1 сообщение)
+# Сообщения для прогрева
 WARMUP_HOURLY = [
     "Привет! Как настроение? Надеюсь, тебе понравился комплекс 💛",
     "Если хочешь, я могу прислать тебе ещё один комплекс или ответить на вопросы.",
@@ -64,13 +69,17 @@ WARMUP_DAILY = [
 user_data = {}
 incoming_messages = []
 
+# === НОВЫЕ КЛАВИАТУРЫ ===
 START_KEYBOARD = ReplyKeyboardMarkup(
     [[BTN_GET_COMPLEX]],
     resize_keyboard=True,
 )
 
 CLUB_KEYBOARD = ReplyKeyboardMarkup(
-    [[BTN_CLUB]],
+    [
+        [BTN_CLUB],
+        [BTN_SITE]
+    ],
     resize_keyboard=True,
 )
 
@@ -118,11 +127,9 @@ def schedule_warmup(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
     if job_queue is None:
         return
 
-    # Удаляем старые задачи
     for job in job_queue.get_jobs_by_name(f"warmup_{chat_id}"):
         job.schedule_removal()
 
-    # Каждый час — 3 сообщения
     for i in range(3):
         job_queue.run_once(
             warmup_job,
@@ -132,7 +139,6 @@ def schedule_warmup(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
             data={"type": "hourly"},
         )
 
-    # Раз в день — 3 сообщения
     for i in range(3):
         job_queue.run_once(
             warmup_job,
@@ -184,7 +190,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             CLUB_SUCCESS_TEXT, reply_markup=ReplyKeyboardRemove()
         )
         await update.message.reply_text(
-            f"Ссылка на канал: {CHANNEL_LINK}"
+            f"Для подписки перейди в бота: {CLUB_BOT_LINK}"
         )
         return
 
@@ -199,7 +205,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         schedule_warmup(chat_id, context)
         return
 
-    # Кнопка "Хочу в клуб"
+    # Кнопка "Хочу в клуб. Перейти для подписки"
     if text == BTN_CLUB or text.lower() == BTN_CLUB.lower():
         if state["phone"]:
             await update.message.reply_text(
@@ -209,6 +215,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "Нажми на кнопку ниже, чтобы поделиться номером:",
             reply_markup=PHONE_KEYBOARD,
+        )
+        return
+
+    # Кнопка "Узнать подробнее"
+    if text == BTN_SITE or text.lower() == BTN_SITE.lower():
+        await update.message.reply_text(
+            f"Подробнее о клубе на сайте: {SITE_LINK}"
         )
         return
 
